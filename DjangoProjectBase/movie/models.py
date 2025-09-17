@@ -1,7 +1,5 @@
 from django.db import models
 
-# create your models here
-
 class Movie(models.Model): 
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=250) 
@@ -9,6 +7,7 @@ class Movie(models.Model):
     url = models.URLField(blank=True)
     genre = models.CharField(blank=True, max_length=250)
     year = models.IntegerField(blank=True, null=True)
+    emb = models.BinaryField(blank=True, null=True)  # <-- nuevo campo para embeddings
 
     def __str__(self): 
         return self.title

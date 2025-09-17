@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from .forms import MovieSearchForm
 
 from .models import Movie
 
@@ -7,6 +8,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 import io
 import urllib, base64
+
+from movie.models import Movie
+from openai import OpenAI
+import numpy as np
+import os
+from dotenv import load_dotenv
+
 
 def home(request):
     #return HttpResponse('<h1>Welcome to Home Page</h1>')
@@ -123,3 +131,45 @@ def generate_bar_chart(data, xlabel, ylabel):
     buffer.close()
     graphic = base64.b64encode(image_png).decode('utf-8')
     return graphic
+
+
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+def recommend_movie(request):
+    load_dotenv(r"C:\Users\cliente\Downloads\Taller3P1\TallerIA_PI\openAI.env")
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    best_movie = None
+    max_similarity = -1
+    prompt = ''
+
+    if request.method == 'POST':
+        form = MovieSearchForm(request.POST)
+        if form.is_valid():
+            prompt = form.cleaned_data['prompt']
+
+            # Generar embedding del prompt
+            response = client.embeddings.create(
+                input=[prompt],
+                model="text-embedding-3-small"
+            )
+            prompt_emb = np.array(response.data[0].embedding, dtype=np.float32)
+
+            # Buscar la película más similar
+            for movie in Movie.objects.all():
+                movie_emb = np.frombuffer(movie.emb, dtype=np.float32)
+                similarity = cosine_similarity(prompt_emb, movie_emb)
+                if similarity > max_similarity:
+                    max_similarity = similarity
+                    best_movie = movie
+    else:
+        form = MovieSearchForm()
+
+    return render(request, 'recommend.html', {
+        'form': form,
+        'best_movie': best_movie,
+        'similarity': max_similarity,
+        'prompt': prompt
+    })

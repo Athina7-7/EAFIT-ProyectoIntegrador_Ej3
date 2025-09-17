@@ -1,0 +1,26 @@
+{% extends 'base.html' %} 
+{% block content %}
+
+<div class="container mt-4">
+  <h1 class="mb-4 text-center">Recomendador de Películas</h1>
+
+  <form method="post" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.prompt.label_tag }}
+      {{ form.prompt}}
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Buscar</button>
+  </form>
+
+  {% if best_movie %}
+  <div class="card mt-4 shadow-sm">
+    <div class="card-body">
+      <h4 class="card-title">Película recomendada:</h4>
+      <p class="card-text"><strong>{{ best_movie.title }}</strong></p>
+      <span class="badge bg-success">Similitud: {{ similarity|floatformat:4 }}</span>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}
